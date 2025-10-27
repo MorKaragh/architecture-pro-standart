@@ -21,6 +21,7 @@ Boundary(backend, "бэкенд бизнес-сценариев") {
     Container(notification_service, "Сервис нотификаций и SMS-подтверждений", "Java", "Отправляет SMS-нотификации, позволяет делать проверки кодом и реализовать ПЭП")
     Container(personalization_service, "Сервис персональных предложений", "Java", "Считает и подготваливает персональные предложения")
     Container(gateway, "API Gateway", "Java", "Объединенная точка входа для различных интерфейсов")
+    Container(auth, "Сервис аутентификации и авторизации", "Java", "Реализует работу с каталогом УЗ, аутентификацию и авторизацию")
 }
 
 Boundary(deep, "бэкенд строгого учёта") {
@@ -38,7 +39,7 @@ Rel(ebank, gateway, "HTTPS", "сохранение заявок канала И�
 Rel(call_center, gateway, "HTTPS", "сохранение заявок канала Колл-центр")
 Rel(call_center_partner, gateway, "HTTPS", "сохранение заявок канала партнёрский Колл-центр")
 Rel(deposit_gui, gateway, "HTTPS", "администрирование депозитного процесса")
-
+Rel(gateway, auth, "HTTPS", "авторизация")
 
 Rel(gateway, zayav_service, "HTTPS", "")
 Rel(gateway, personalization_service, "HTTPS", "")
@@ -51,6 +52,7 @@ Rel(zayav_service, crm, "HTTPS", "")
 Rel(zayav_service, abs_adapter, "HTTPS", "")
 
 Rel(abs_adapter, abs, "HTTPS", "")
+Rel(abs_adapter, auth, "HTTPS", "")
 Rel(deposit_gui, abs_adapter, "HTTPS", "администрирование депозитного процесса")
 
 Rel(user, call_center, "телефон", "")
