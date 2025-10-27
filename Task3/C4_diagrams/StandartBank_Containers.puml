@@ -1,0 +1,40 @@
+@startuml standart bank deposit process
+!include assets/C4_templates/C4_Container.puml
+
+title Целевая архитектура банка Стандарт (депозитный процесс)
+
+Person_Ext(user, "Клиент", "")
+
+Boundary(backend, "бэкенд бизнес-сценариев") {
+    Container(call_center, "Система колл-центра", "", "")
+    Container(site, "Сайт", "", "")
+    Container(ebank, "Интернет банк", "", "")
+    Container(zayav_service, "Сервис заявок на депозит", "", "")
+    Container(gateway, "API Gateway", "", "")
+}
+
+Boundary(deep, "бэкенд строгого учёта") {
+    Container(abs, "АБС", "", "")
+    Container(abs_adapter, "Адаптер к АБС", "", "")
+}
+
+Boundary(partners, "Компоненты подрядчиков") {
+    Container_Ext(call_center_partner, "Система партнёрского колл-центра", "", "")
+    Container_Ext(sms_gateway, "SMS-шлюз", "", "")
+}
+
+ContainerQueue(eventq, "Брокер событий", "Kafka")
+ContainerDb(abs_db, "БД АБС", "")
+
+
+' === СВЯЗИ ===
+
+' Rel(abs_adapter, abs, "HTTPS", "интеграция данных в АБС")
+Rel(site, gateway, "HTTPS", "сохранение заявок канала Сайт")
+Rel(ebank, gateway, "HTTPS", "сохранение заявок канала Сайт")
+Rel(call_center, gateway, "HTTPS", "сохранение заявок канала Сайт")
+Rel(gateway, zayav_service, "HTTPS", "сохранение заявок канала Сайт")
+
+' BiRel(eventq, event_srv, "Subscribe/Publish", "Обработка событий")
+
+@enduml
