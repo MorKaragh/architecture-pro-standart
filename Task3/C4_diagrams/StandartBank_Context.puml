@@ -1,0 +1,42 @@
+@startuml bank standart deposit system
+!include assets/C4_templates/C4_Context.puml
+!include assets/icons/building_columns.puml
+
+title Система работы с депозитами банка "Стандарт" 
+
+Enterprise_Boundary(enterprise, "Банк Стандарт") {
+    Person(front_office, "Сотрудник фронт-офиса", "")
+    Person(back_office, "Сотрудник бэк-офиса", "")
+    Person(caller, "Сотрудник колл-центра", "")
+    System(system, "Банковская IT-система", "включает в себя АБС и другое ПО, реализующее процессы банковских депозитов", $sprite="building_columns")
+    System(callcenter, "Система колл-центра", "")
+    System(site, "Сайт", "")
+    System(ebank, "Интернет-банк", "")
+}
+
+Boundary(bank, "Сторонние подрядчики") {
+    System_Ext(sms_gateway, "SMS-шлюз", "")
+    System_Ext(partner_callcenter, "Партнёрский колл-центр", "")
+    Person_Ext(external_caller, "Специалист партнёрского колл-центра", "")
+}
+
+Person_Ext(customer, "Клиент", "")
+
+Rel(back_office, system, "Ручное подтверждение заявок (MVP)", "")
+Rel(front_office, system, "CRUD-операции с заявками на депозит")
+Rel(caller, callcenter, "")
+Rel(callcenter, system, "работа с заявками")
+Rel(ebank, system, "работа с заявками, перс. предложениями")
+Rel(site, system, "работа с заявками, предложениями")
+
+Rel(customer, site, "web")
+Rel(customer, ebank, "web")
+Rel(customer, external_caller, "звонок")
+Rel(customer, caller, "звонок")
+
+Rel(system, sms_gateway, "SMS-нотификации")
+Rel(partner_callcenter, system, "работа с заявками")
+Rel(external_caller, partner_callcenter, "")
+
+
+@enduml

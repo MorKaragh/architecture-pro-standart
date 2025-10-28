@@ -1,0 +1,37 @@
+@startuml credit process context
+!include assets/C4_templates/C4_Context.puml
+!include assets/icons/building_columns.puml
+
+title Система кредитного процесса с подачей заявки онлайн банка "Стандарт"
+
+Enterprise_Boundary(enterprise, "Банк Стандарт") {
+    Person(front_office, "Сотрудник фронт-офиса", "Обрабатывает заявки в отделении")
+    Person(back_office, "Сотрудник бэк-офиса", "Управляет кредитными продуктами")
+    System(system, "Банковская IT-система", "включает в себя АБС, кредитный конвейер, систему скоринга и другое ПО", $sprite="building_columns")
+    System(site, "Сайт", "Отображение кредитных предложений и прием заявок")
+    System(ebank, "Интернет-банк", "Персональные предложения и подача заявок")
+}
+
+Boundary(external, "Внешние системы") {
+    System_Ext(sms_gateway, "SMS-шлюз", "Отправка уведомлений")
+    System_Ext(bki, "Бюро кредитных историй", "Данные о кредитной истории клиентов")
+}
+
+Person_Ext(customer, "Клиент", "Подает заявки на кредит")
+
+' Связи с клиентами
+Rel(customer, site, "Просмотр предложений, подача заявки", "HTTPS")
+Rel(customer, ebank, "Просмотр предодобренных предложений, подача заявки", "HTTPS")
+Rel(customer, front_office, "Продолжение работы с заявкой", "Личный визит")
+
+' Связи внутри банка
+Rel(front_office, system, "Обработка заявок в отделении", "Внутренняя сеть")
+Rel(back_office, system, "Управление кредитными продуктами", "Внутренняя сеть")
+Rel(site, system, "Передача заявок на кредит", "HTTPS")
+Rel(ebank, system, "Передача заявок и получение предодобренных предложений", "HTTPS")
+
+' Связи с внешними системами
+Rel(system, sms_gateway, "SMS-уведомления о статусе заявки", "HTTPS")
+Rel(system, bki, "Получение данных для скоринга", "REST API")
+
+@enduml

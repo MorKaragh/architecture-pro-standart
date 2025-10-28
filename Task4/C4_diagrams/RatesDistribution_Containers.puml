@@ -1,0 +1,51 @@
+@startuml rates distribution containers
+!include assets/C4_templates/C4_Container.puml
+!include assets/icons/building_columns.puml
+
+title Архитектура системы распространения ставок депозитов
+
+Person_Ext(customer, "Клиент", "")
+Person(back_office, "Менеджер бэк-офиса", "")
+Person(callcenter_agent, "Сотрудник кол-центра", "")
+Person_Ext(partner_agent, "Сотрудник партнерского кол-центра", "")
+
+Boundary(bank, "Банк Стандарт") {
+    Container(web_interface, "Web-интерфейс управления ставками", "HTML, JS, CSS", "Интерфейс для обновления ставок")
+
+    Container(callcenter_system, "Система кол-центра", "Java Spring Boot", "Обработка звонков клиентов")
+
+        Container(rates_service, "Сервис распространения ставок", "Java Spring Boot", "Управление передачей ставок в кол-центры, генерация файлов")
+        Container(sftp_server, "SFTP-сервер", "OpenSSH", "Безопасная передача файлов")
+        Container(api_gateway, "API Gateway", "Java Spring Boot", "Единая точка входа для API")
+
+    Boundary(existing_systems, "Backend строгого учёта") {
+        Container(abs, "АБС", "Delphi", "Ведение справочника ставок депозитов", $sprite="building_columns")
+        Container(abs_adapter, "Адаптер к АБС", "Java Spring", "Интеграция с АБС, кэширование")
+    }
+}
+
+Boundary(partner, "Партнерский кол-центр") {
+    Container_Ext(partner_system, "Система партнерского кол-центра", "Внешняя система", "Обработка звонков клиентов")
+}
+
+' Связи внутри банка
+Rel(back_office, web_interface, "Обновляет ставки", "HTTPS")
+Rel(web_interface, api_gateway, "API запросы", "HTTPS")
+Rel(api_gateway, rates_service, "Управление ставками", "HTTPS")
+Rel(rates_service, abs_adapter, "Получает ставки", "HTTPS")
+Rel(abs_adapter, abs, "Запросы к АБС", "HTTPS")
+
+' Передача ставок в собственный кол-центр
+Rel(rates_service, callcenter_system, "Передает ставки через API", "HTTPS")
+Rel(callcenter_agent, callcenter_system, "Получает ставки", "Web")
+
+' Передача ставок в партнерский кол-центр
+Rel(rates_service, sftp_server, "Генерирует и передает файл", "HTTPS")
+Rel(sftp_server, partner_system, "Передает файл через SFTP", "SFTP")
+Rel(partner_agent, partner_system, "Получает ставки", "Web")
+
+' Связи с клиентами
+Rel(customer, callcenter_agent, "Звонок", "Телефон")
+Rel(customer, partner_agent, "Звонок", "Телефон")
+
+@enduml

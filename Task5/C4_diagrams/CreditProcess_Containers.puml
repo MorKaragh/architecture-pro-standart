@@ -1,0 +1,72 @@
+@startuml credit process containers
+!include assets/C4_templates/C4_Container.puml
+!include assets/icons/building_columns.puml
+
+title Архитектура кредитного процесса с подачей заявки онлайн
+
+Person_Ext(customer, "Клиент", "")
+Person(front_office, "Сотрудник фронт-офиса", "")
+Person(back_office, "Сотрудник бэк-офиса", "")
+
+Container(site, "Сайт", "PHP, React.js", "Отображение кредитных предложений и прием заявок")
+Container(ebank, "Интернет-банк", "ASP.NET MVC", "Персональные предложения и подача заявок")
+
+Boundary(backend, "Бэкенд бизнес-сценариев") {
+    Container(crm, "Система CRM", "Java Spring Boot", "Хранение клиентских данных и кросс-канальность")
+    Container(credit_service, "Сервис кредитных заявок", "Java Spring Boot", "Управление жизненным циклом кредитных заявок")
+    Container(personalization_service, "Сервис персональных предложений", "Java Spring Boot", "Расчет предодобренных кредитных предложений")
+    Container(notification_service, "Сервис уведомлений", "Java Spring Boot", "SMS-уведомления и подтверждения")
+    Container(gateway, "API Gateway", "Java Spring Boot", "Единая точка входа для API")
+    Container(auth, "Сервис аутентификации", "Java Spring Boot", "Аутентификация и авторизация")
+}
+
+Boundary(credit_systems, "Системы кредитования") {
+    Container(credit_pipeline, "Кредитный конвейер", "Java, Camunda", "Обработка заявок на кредит")
+    Container(scoring_system, "Система кредитного скоринга", "Python, Flask", "Определение рейтинга клиента")
+    ContainerQueue(eventq, "события обработки заявок", "kafka")
+}
+
+Boundary(accounting, "Backend строгого учёта") {
+    Container(abs, "АБС", "Delphi", "Основной банковский учет", $sprite="building_columns")
+    Container(abs_adapter, "Адаптер к АБС", "Java Spring", "Интеграция с АБС, кэширование")
+}
+
+Container_Ext(sms_gateway, "SMS-шлюз", "Внешняя система", "Отправка SMS")
+Container_Ext(bki, "Бюро кредитных историй", "Внешняя система", "Данные о кредитной истории")
+
+Rel(customer, site, "Просмотр предложений, подача заявки", "HTTPS")
+Rel(customer, ebank, "Просмотр предложений, подача заявки", "HTTPS")
+Rel(customer, front_office, "Продолжение работы с заявкой", "Личный визит")
+
+Rel(site, gateway, "Передача заявок", "HTTPS")
+Rel(ebank, gateway, "Передача заявок, получение предложений", "HTTPS")
+Rel(gateway, auth, "Аутентификация", "HTTPS")
+
+Rel(gateway, credit_service, "Обработка заявок", "HTTPS")
+Rel(gateway, personalization_service, "Получение предложений", "HTTPS")
+Rel(credit_service, notification_service, "Отправка уведомлений", "HTTPS")
+Rel(credit_service, crm, "Получение\сохранение данных клиента", "HTTPS")
+Rel(credit_service, eventq, "получение событий заявок", "HTTPS")
+Rel(credit_service, abs_adapter, "получение данных по заявке клиента", "HTTPS")
+' Rel(personalization_service, abs_adapter, "Получение данных клиента из АБС", "HTTPS")
+
+Rel(personalization_service, crm, "Получение данных клиента", "HTTPS")
+Rel(personalization_service, credit_pipeline, "Получение скоринга и других параметров кредитования", "HTTPS")
+
+Rel(credit_service, credit_pipeline, "Передача заявок на обработку", "REST API")
+Rel(credit_pipeline, scoring_system, "Запрос скоринга", "REST API")
+Rel(credit_pipeline, eventq, "отправка событий заявок", "kafka")
+Rel(scoring_system, bki, "Получение данных о клиенте", "REST API")
+
+BiRel(credit_pipeline, abs, "Синхронизация заявок раз в сутки", "")
+Rel(abs_adapter, abs, "Работа с данными", "HTTPS")
+
+' ' Уведомления
+Rel(notification_service, sms_gateway, "Отправка SMS", "HTTPS")
+
+' ' Администрирование
+Rel(front_office, abs, "Обработка заявок в отделении", "")
+Rel(back_office, abs, "Управление кредитными продуктами", "")
+Rel(back_office, credit_pipeline, "Обработка заявок", "web")
+
+@enduml

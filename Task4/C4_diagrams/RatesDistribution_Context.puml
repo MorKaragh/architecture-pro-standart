@@ -1,0 +1,38 @@
+@startuml rates distribution context
+!include assets/C4_templates/C4_Context.puml
+!include assets/icons/building_columns.puml
+
+title Система распространения ставок депозитов для кол-центров банка "Стандарт"
+
+Enterprise_Boundary(enterprise, "Банк Стандарт") {
+    Person(back_office, "Менеджер бэк-офиса", "Обновляет ставки депозитов")
+    Person(callcenter_agent, "Сотрудник кол-центра", "Консультирует клиентов по ставкам")
+    System(abs, "АБС", "Ведение справочника ставок депозитов", $sprite="building_columns")
+    System(callcenter_system, "Система кол-центра", "Обработка звонков клиентов")
+    System(rates_service, "Сервис распространения ставок", "Управление передачей ставок в кол-центры")
+    System(sftp_server, "SFTP-сервер", "Безопасная передача файлов")
+}
+
+Boundary(partner, "Партнерский кол-центр") {
+    Person_Ext(partner_agent, "Сотрудник партнерского кол-центра", "Консультирует клиентов по ставкам")
+    System_Ext(partner_system, "Система партнерского кол-центра", "Обработка звонков клиентов")
+}
+
+Person_Ext(customer, "Клиент", "Звонит для уточнения ставок")
+
+' Связи внутри банка
+Rel(back_office, abs, "Обновляет ставки", "HTTPS")
+Rel(abs, rates_service, "Передает изменения ставок", "HTTPS")
+Rel(rates_service, callcenter_system, "Передает ставки через API", "HTTPS")
+Rel(rates_service, sftp_server, "Генерирует файлы со ставками", "HTTPS")
+Rel(callcenter_agent, callcenter_system, "Получает ставки для консультаций", "Web")
+
+' Связи с партнерским кол-центром
+Rel(sftp_server, partner_system, "Передает файлы со ставками", "SFTP")
+Rel(partner_agent, partner_system, "Получает ставки для консультаций", "Web")
+
+' Связи с клиентами
+Rel(customer, callcenter_agent, "Звонок для уточнения ставок", "Телефон")
+Rel(customer, partner_agent, "Звонок для уточнения ставок", "Телефон")
+
+@enduml
